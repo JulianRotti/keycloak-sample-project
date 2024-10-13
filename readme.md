@@ -1,4 +1,6 @@
-# 1. Keycloak Setup
+# Keycloak Sample Project
+
+## 1. Keycloak Setup
 
 ### Prerequisites
 - Install Docker and Docker Compose.
