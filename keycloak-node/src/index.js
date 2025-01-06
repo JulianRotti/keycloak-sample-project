@@ -1,12 +1,8 @@
 import express from 'express';
 import AppRoutes from './routes/AppRoutes.js';
-import cors from 'cors';  // Import CORS middleware
-import { keycloak } from './middleware/authMiddleware.js';
+import cors from 'cors';
 
 const app = express();
-
-// initialize Keycloak globally
-app.use(keycloak.middleware());
 
 // Middleware
 app.use(express.json());

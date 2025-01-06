@@ -1,18 +1,31 @@
-import Keycloak from 'keycloak-connect';
-import dotenv from 'dotenv';
+import axios from 'axios';
+import { createRemoteJWKSet } from 'jose';
 
-dotenv.config(); // load environment variables from .env file
+export const getJwksUrl = async (keycloakUrl, realm) => {
+    const wellKnownUrl = `${keycloakUrl}/realms/${realm}/.well-known/openid-configuration`;
+    const { data } = await axios.get(wellKnownUrl);
+    return data.jwks_uri;
+};
 
-export const keycloak = new Keycloak({}, {
-    'realm': process.env.NODE_APP_KEYCLOAK_REALM,
-    'auth-server-url': `${process.env.NODE_APP_KEYCLOAK_URL}`,
-    'ssl-required': 'external',
-    'resource': process.env.NODE_APP_KEYCLOAK_CLIENT_ID,
-    'confidential-port': 0,
-    'bearer-only': true
-});
+/**
+ * Fetch and prepare the JWKS for token validation
+ * @param {string} jwksUri - The URI of the JWKS
+ * @returns {object} - A Remote JWK Set object for token validation
+ */
+export const getJwks = async (jwksUri) => {
+    try {
+        const response = await axios.get(jwksUri);
+        const jwks = response.data;
+        return createRemoteJWKSet(new URL(jwksUri));
+    } catch (error) {
+        throw new Error(`Failed to fetch JWKS: ${error.message}`);
+    }
+};
 
-// check if user has a specific role
-export const protectWithRole = (role) => {
-    return keycloak.protect(`realm:${role}`);
-}
+export const extractBearerToken = (req) => {
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        return authHeader.split(' ')[1]; // Extract and return the token
+    }
+    throw new Error('Authorization token is missing or invalid.');
+};
